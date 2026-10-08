@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: salesdemo
+      POSTGRES_USER: salesdemo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set password in .env}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesdemo"]
+      interval: 5s
+      retries: 10
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://salesdemo:${POSTGRES_PASSWORD}@postgres:5432/salesdemo
+      DEMO_API_KEY: ${DEMO_API_KEY:?Set demo key in .env}
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+volumes:
+  pg_data:
